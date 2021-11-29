@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html><head>
+  <h3>Jenna Landy, jpl323</h3>
+  
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  
+
+  </head>
+  <body>
+
+
+    <p id="p1">
+      <b>HW 6 SVG:</b><br>
+  
+      <svg id = "svg1" height=400 width=800 ></svg>
+
+      <script>
+
+      //PART A  
+      const requestData = async function() {
+  
+      let data = await d3.json('/mariokart_records.json');
+
+      let svg1 = d3.select("svg#svg1");
+      const svg1width = svg1.attr('width');
+      const svg1height = svg1.attr('height');
+      const svg1margins = {top: 10, right: 10, bottom: 30, left: 40};
+      const svg1chWidth = svg1width - svg1margins.left - svg1margins.right;
+      const svg1chHeight = svg1height - svg1margins.top - svg1margins.bottom;
+
+
+      //PART B and C
+
+      let annotations = svg1.append("g");
+
+      let chartArea = svg1.append("g").attr("id","points")
+                          .attr("transform",`translate(${svg1margins.left},${svg1margins.top})`);
+
+  
+      let valdomain = [data.min_value,data.max_value]
+      let valScale = d3.scaleLinear()
+                        .domain(valdomain)
+                        .range([svg1chHeight,0]);
+
+
+      let leftAxis = d3.axisLeft(valScale).tickFormat(d=>{ return ""+d });
+      let leftGrid = d3.axisLeft(valScale)
+                      .tickSize(-svg1chWidth-10)
+                      .tickFormat("") 
+                      
+      annotations.append("g")
+            .attr("class", "y axis")
+            .attr("transform",`translate(${svg1margins.left-10},${svg1margins.top})`)
+            .call(leftAxis)
+      annotations.append("g")
+            .attr("class", "y gridlines")
+            .attr("transform",`translate(${svg1margins.left-10},${svg1margins.top})`)
+            .call(leftGrid) 
+            
+
+        const timeParser = d3.timeParse('%Y-%m-%d');
+      
+        clean_earliest_date=timeParser(data.earliest_date)
+        clean_latest_date=timeParser(data.latest_date)
+
+
+      let datedomain = [clean_earliest_date,clean_latest_date]
+      let dateScale = d3.scaleTime()
+                        .domain(datedomain)
+                        .range([0,svg1chWidth]);
+
+
+      let bottomAxis = d3.axisBottom(dateScale).tickFormat(d=>{ return ""+d.getFullYear()});
+      let bottomGrid = d3.axisBottom(dateScale)
+                      .tickSize(-svg1chHeight-10)
+                      .tickFormat("")
+
+      annotations.append("g")
+            .attr("class", "x axis")
+            .attr("transform",`translate(${svg1margins.left},${svg1chHeight+svg1margins.top+10})`)
+            .call(bottomAxis)
+      annotations.append("g")
+            .attr("class", "x gridlines")
+            .attr("transform",`translate(${svg1margins.left},${svg1chHeight+svg1margins.top+10})`)
+            .call(bottomGrid)
+
+
+      let colorScale = d3.scaleOrdinal()
+                          .domain(["Kalimari Desert", "Rainbow Road", "D.K.'s Jungle Parkway", "Toad's Turnpike", "Luigi Raceway"])
+                          .range(["#C901A1","#F88810","#007FBD","#D80500","#009600"])
+
+
+
+    //PART D
+
+    var lineGen = d3.line()
+                  .x( d => dateScale(timeParser(d['date'])) )
+                  .y( d => valScale(d['record_time']) );
+
+
+    //PART E
+
+
+    dataPoints = chartArea.selectAll("g.gTags").data(data.timeseries)
+           .join("g")
+           .attr("class", "gTags")
+           .style("stroke", d => colorScale( d.track ))
+
+
+    //PART F
+
+    dataPoints.append("path")
+           .attr("class", "line")
+           .attr("fill", "none")
+           .attr("stroke-width", 2)
+           .attr('d', d => lineGen( d.values ))
+
+
+    //PART G
+
+    dataPoints.selectAll("circle").data(d=>d.values)
+          .join("circle")
+          .attr("cx",d=>dateScale(timeParser(d.date)))
+          .attr("cy",d=>valScale(d.record_time))
+          .attr("r", 2)
+          .style("fill", d=>colorScale( d.track ))
+
+
+  }
+
+
+
+      requestData();
+
+
+      </script>
+      <style>
+  
+        .gridlines line {
+          stroke: #bbb;
+        }
+    
+        .gridlines .domain {
+          stroke: none;
+        }
+
+        
+       </style> 
+
+</p>
